@@ -1,22 +1,519 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-    <title>我的CTF学习之路 - e14ik</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⍙⃤ e14ik@cyberops://root_access</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
-        h1 { color: #333; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        :root {
+            --hacker-green: #00ff41;
+            --matrix-cyan: #00ffff;
+            --warning-orange: #ff6600;
+            --danger-red: #ff003c;
+            --deep-purple: #8a2be2;
+        }
+        
+        body { 
+            background: radial-gradient(ellipse at center, #0a0a0a 0%, #000000 100%);
+            color: var(--hacker-green);
+            font-family: 'Courier New', 'Monaco', monospace;
+            line-height: 1.3;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+                /* 高级背景效果 */
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: -2;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .glitch-container {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        /* 头部终端栏 */
+        .terminal-header {
+            background: linear-gradient(90deg, #001100, #003300);
+            border: 1px solid var(--hacker-green);
+            border-bottom: none;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+        
+        .status-dots {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .dot.red { background: var(--danger-red); }
+        .dot.yellow { background: var(--warning-orange); }
+        .dot.green { background: var(--hacker-green); }
+        
+        .header-title {
+            color: var(--hacker-green);
+            font-weight: bold;
+            text-shadow: 0 0 10px currentColor;
+        }
+                /* 扫描线效果 */
+        .main-terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(0, 255, 65, 0.03) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .prompt { 
+            color: var(--hacker-green);
+            margin-right: 8px;
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        .host { 
+            color: var(--matrix-cyan);
+            text-shadow: 0 0 8px currentColor;
+        }
+        
+        .path { 
+            color: var(--warning-orange);
+        }
+        
+        .cursor { 
+            animation: blink 1s infinite, glitch 5s infinite;
+            background: var(--hacker-green);
+            width: 8px;
+            height: 18px;
+            display: inline-block;
+            margin-left: 4px;
+            box-shadow: 0 0 10px var(--hacker-green);
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translateX(0); }
+            5% { transform: translateX(-2px); }
+            10% { transform: translateX(2px); }
+            15% { transform: translateX(0); }
+        }
+        
+        .command {
+            margin: 18px 0;
+            white-space: pre-wrap;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .output {
+            color: #a0ffa0;
+            margin-left: 25px;
+            text-shadow: 0 0 3px currentColor;
+        }
+        
+        .highlight { 
+            color: var(--danger-red);
+            text-shadow: 0 0 8px currentColor;
+            font-weight: bold;
+        }
+        
+        .warning { 
+            color: var(--warning-orange);
+            text-shadow: 0 0 5px currentColor;
+        }
+        
+        .success { 
+            color: var(--hacker-green);
+            text-shadow: 0 0 8px currentColor;
+        }
+        
+        .cyber { 
+            color: var(--matrix-cyan);
+            text-shadow: 0 0 10px currentColor;
+        }
+                /* 攻击态势面板 */
+        .attack-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 25px 0;
+            padding: 15px;
+            background: rgba(0, 30, 0, 0.4);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+        }
+        
+        .radar {
+            position: relative;
+            height: 120px;
+            background: radial-gradient(circle, transparent 60%, rgba(0, 255, 65, 0.1) 100%);
+            border: 1px solid var(--hacker-green);
+        }
+        
+        .radar-sweep {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(transparent 90%, var(--hacker-green) 100%);
+            animation: sweep 4s linear infinite;
+        }
+        
+        @keyframes sweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 武器库系统 */
+        .weapon-system {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .weapon-card {
+            background: rgba(0, 40, 0, 0.5);
+            border: 1px solid var(--hacker-green);
+            padding: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .weapon-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .weapon-card:hover::before {
+            left: 100%;
+        }
+                /* 实时日志 */
+        .live-log {
+            height: 120px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--warning-orange);
+            padding: 10px;
+            margin: 15px 0;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            animation: logEntry 0.5s ease-out;
+            margin: 3px 0;
+        }
+        
+        @keyframes logEntry {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
-    <h1>欢迎来到我的CTF/Pwn学习博客！</h1>
-    <p>我是e14ik，这里将记录我的二进制安全学习历程。</p>
-    <h2>近期目标：</h2>
-    <ul>
-        <li>学习栈溢出原理</li>
-        <li>掌握GDB和pwntools</li>
-        <li>参加CTF比赛</li>
-        <li>每周更新学习笔记</li>
-    </ul>
-    <p><strong>网站建设中...</strong></p>
+    <!-- 高级背景 -->
+    <div class="cyber-grid"></div>
+    <canvas class="particles" id="particles"></canvas>
+    
+    <div class="glitch-container">
+        <!-- 终端头部 -->
+        <div class="terminal-header">
+            <div class="status-dots">
+                <div class="dot red"></div>
+                <div class="dot yellow"></div>
+                <div class="dot green"></div>
+            </div>
+            <div class="header-title">⍙⃤ CYBER_OPS_CENTER // e14ik@root_access</div>
+            <div class="header-time" id="liveTime">[SYSTEM_TIME]</div>
+        </div>
+        
+        <!-- 主终端内容 -->
+        <div class="main-terminal">
+            <div class="command">
+                <span class="prompt">root<span class="host">@cyberops</span>:<span class="path">/war_room</span>#</span> initialize_tactical_interface
+            </div>
+            <div class="output success">[✓] Tactical HUD Initialized | Threat Level: <span class="warning">ELEVATED</span></div>
+            
+            <div class="command">
+                <span class="prompt">root<span class="host">@cyberops</span>:<span class="path">/war_room</span>#</span> system_status --full
+            </div>
+            <div class="output">
+                <div>> IDENTITY: <span class="cyber">e14ik//CTF_SPEC_OPS</span></div>
+                <div>> STATUS: <span class="warning">ENGAGED_IN_RESEARCH</span></div>
+                <div>> ACTIVE_THREATS: <span class="highlight">Stack_Overflow</span> | <span class="highlight">Heap_Exploitation</span></div>
+                <div>> COUNTERMEASURES: <span class="success">[ACTIVE]</span></div>
+            </div>
+                        <!-- 攻击态势面板 -->
+            <div class="attack-panel">
+                <div>
+                    <div class="output cyber">[ LIVE RADAR FEED ]</div>
+                    <div class="radar">
+                        <div class="radar-sweep"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="output cyber">[ THREAT ASSESSMENT ]</div>
+                    <div class="output">
+                        <div>> TARGETS_ACQUIRED: <span class="warning">4</span></div>
+                        <div>> VULNERABILITIES: <span class="highlight">CRITICAL</span></div>
+                        <div>> EXPLOIT_READY: <span class="success">TRUE</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="command">
+                <span class="prompt">root<span class="host">@cyberops</span>:<span class="path">/war_room</span>#</span> deploy_weapon_systems --list
+            </div>
+            
+            <!-- 武器库系统 -->
+            <div class="weapon-system">
+                <div class="weapon-card">
+                    <div class="output cyber">GDB_DEBUGGER</div>
+                    <div class="output">Advanced Memory Analysis</div>
+                    <div class="output success">[READY]</div>
+                </div>
+                <div class="weapon-card">
+                    <div class="output cyber">PWNYOOLS</div>
+                    <div class="output">Exploit Development Kit</div>
+                    <div class="output warning">[DEPLOYING]</div>
+                </div>
+                <div class="weapon-card">
+                    <div class="output cyber">ROP_CHAINS</div>
+                    <div class="output">Code Execution Bypass</div>
+                    <div class="output success">[ARMED]</div>
+                </div>
+                <div class="weapon-card">
+                    <div class="output cyber">SHELLCODE</div>
+                    <div class="output">Custom Payload System</div>
+                    <div class="output highlight">[LOADED]</div>
+                </div>
+            </div>
+                        <!-- 实时日志 -->
+            <div class="command">
+                <span class="prompt">root<span class="host">@cyberops</span>:<span class="path">/war_room</span>#</span> tail -f /var/log/cyber_ops.log
+            </div>
+            <div class="live-log" id="liveLog">
+                <!-- 日志将通过JavaScript动态生成 -->
+            </div>
+            
+            <div class="command">
+                <span class="prompt">root<span class="host">@cyberops</span>:<span class="path">/war_room</span>#</span> <span id="typing"></span><span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 粒子背景系统
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particlesArray = [];
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.color = `hsl(${Math.random() * 120 + 120}, 100%, 50%)`;
+            }
+            
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function initParticles() {
+            particlesArray = [];
+            for (let i = 0; i < 100; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+        
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        
+        initParticles();
+        animateParticles();
+                // 实时时间更新
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('liveTime').textContent = `[${timeString} UTC]`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // 实时日志系统
+        const logMessages = [
+            "SYSTEM: Memory analysis module loaded successfully",
+            "SECURITY: Firewall rules updated",
+            "SCAN: Port 1337 - SERVICE IDENTIFIED",
+            "DEBUG: Breakpoint hit at 0x401235",
+            "EXPLOIT: ROP chain construction in progress",
+            "WARNING: Stack canary detected",
+            "INFO: Bypassing ASLR protection",
+            "SUCCESS: Shellcode execution verified",
+            "ALERT: Unauthorized access attempt blocked",
+            "UPDATE: Payload encryption completed"
+        ];
+        
+        function addLogEntry() {
+            const log = document.getElementById('liveLog');
+            const message = logMessages[Math.floor(Math.random() * logMessages.length)];
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // 初始日志
+        for (let i = 0; i < 5; i++) {
+            setTimeout(addLogEntry, i * 300);
+        }
+        setInterval(addLogEntry, 2000);
+        
+        // 动态命令输入效果
+        const commands = [
+            'nmap -sS -A -T4 target/24',
+            'gdb -q ./vulnerable_binary',
+            'python3 exploit.py --target 192.168.1.100',
+            'checksec --file=target_binary',
+            'ROPgadget --binary vuln --ropchain',
+            'searchsploit "Linux Kernel"',
+            'wireshark -i eth0 -k',
+            'metasploit -x "use exploit/linux/local"'
+        ];
+        
+        let cmdIndex = 0;
+        let charIndex = 0;
+        let currentCmd = '';
+        let isDeleting = false;
+        
+        function typeWriter() {
+            const typingElement = document.getElementById('typing');
+            
+            if (!isDeleting && charIndex <= commands[cmdIndex].length) {
+                currentCmd = commands[cmdIndex].substring(0, charIndex);
+                charIndex++;
+                setTimeout(typeWriter, 80);
+            } else if (isDeleting && charIndex >= 0) {
+                currentCmd = commands[cmdIndex].substring(0, charIndex);
+                charIndex--;
+                setTimeout(typeWriter, 40);
+            } else {
+                isDeleting = !isDeleting;
+                if (!isDeleting) {
+                    cmdIndex = (cmdIndex + 1) % commands.length;
+                }
+                setTimeout(typeWriter, 1500);
+            }
+            
+            typingElement.textContent = currentCmd;
+        }
+                // 启动打字效果
+        setTimeout(typeWriter, 3000);
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        });
+        
+        // 随机干扰效果
+        setInterval(() => {
+            const elements = document.querySelectorAll('.output, .command');
+            elements.forEach(el => {
+                if (Math.random() < 0.02) {
+                    el.style.opacity = '0.7';
+                    setTimeout(() => el.style.opacity = '1', 100);
+                }
+            });
+        }, 1000);
+    </script>
 </body>
 </html>
